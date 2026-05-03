@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artifact Assessment Dashboard</title>
+<style>
+/* ═══════════════════════════════════════════════════
+   ALL styles scoped to .aad-wrap — nothing leaks out
+   ═══════════════════════════════════════════════════ */
+
+.aad-wrap {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #1f2937;
+  max-width: 680px;
+  margin: 20px auto;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+.aad-wrap *, .aad-wrap *::before, .aad-wrap *::after {
+  box-sizing: inherit;
+}
+
+/* ── Skip link ── */
+.aad-wrap .aad-skip {
+  position: absolute;
+  top: -50px;
+  left: 0;
+  background: #1e40af;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  transition: top 0.1s;
+  z-index: 999;
+}
+.aad-wrap .aad-skip:focus { top: 0; }
+
+/* ── Cards ── */
+.aad-wrap .aad-card {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.aad-wrap .aad-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 5px;
+}
+.aad-wrap .aad-subtitle {
+  font-size: 0.83rem;
+  color: #4b5563;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+/* ── App header ── */
+.aad-wrap .aad-header {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+}
+.aad-wrap .aad-header h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 3px;
+}
+.aad-wrap .aad-header p {
+  font-size: 0.82rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* ── Upload zone ── */
+.aad-wrap .aad-upload-zone {
+  border: 2px dashed #9ca3af;
+  border-radius: 8px;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: #f9fafb;
+  position: relative;
+}
+.aad-wrap .aad-upload-zone:hover,
+.aad-wrap .aad-upload-zone.dragover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.aad-wrap .aad-upload-zone:focus-within {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+.aad-wrap .aad-upload-zone p {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin: 0 0 4px;
+}
+.aad-wrap .aad-upload-zone strong { color: #111827; }
+
+.aad-wrap #file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.aad-wrap .aad-upload-icon {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  color: #6b7280;
+}
+
+.aad-wrap .aad-hint {
+  margin-top: 14px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  color: #374151;
+  text-align: left;
+}
+.aad-wrap .aad-hint strong {
+  display: block;
+  color: #1e3a8a;
+  margin-bottom: 4px;
+  font-size: 0.83rem;
+}
+
+/* ── Alerts ── */
+.aad-wrap .aad-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.83rem;
+  margin-bottom: 12px;
+}
+.aad-wrap .aad-alert svg { flex-shrink: 0; margin-top: 1px; }
+.aad-wrap .aad-alert-error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+.aad-wrap .aad-alert-warn  { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+.aad-wrap .aad-alert-info  { background: #eff6ff; border: 1px solid #93c5fd; color: #1e3a8a; }
+.aad-wrap #aad-error-msg   { display: none; }
+
+/* ── Buttons ── */
+.aad-wrap .aad-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.08s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.aad-wrap .aad-btn:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+.aad-wrap .aad-btn:active { transform: scale(0.98); }
+.aad-wrap .aad-btn-primary { background: #1e40af; color: #fff; border-color: #1e40af; }
+.aad-wrap .aad-btn-primary:hover { background: #1d4ed8; }
+.aad-wrap .aad-btn-secondary { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+.aad-wrap .aad-btn-secondary:hover { background: #f3f4f6; }
+.aad-wrap .aad-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ── Form elements ── */
+.aad-wrap .aad-field { display: flex; flex-direction: column; gap: 4px; }
+.aad-wrap .aad-field label {
+  font-size: 0.77rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.aad-wrap .aad-field select,
+.aad-wrap .aad-field input[type="number"] {
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 9px 10px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  color: #111827;
+  width: 100%;
+  cursor: pointer;
+}
+.aad-wrap .aad-field select:focus,
+.aad-wrap .aad-field input:focus {
+  outline: 3px solid #2563eb;
+  outline-offset: 1px;
+  border-color: #2563eb;
+}
+.aad-wrap .aad-field-hint {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+/* ── Mapper grid ── */
+.aad-wrap .aad-mapper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* ── Metric cards ── */
+.aad-wrap .aad-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.aad-wrap .aad-metric {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.aad-wrap .aad-metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 3px;
+}
+.aad-wrap .aad-metric-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+  margin: 0;
+}
+.aad-wrap .aad-metric-sub {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin: 3px 0 0;
+}
+
+/* ── Progress bars ── */
+.aad-wrap .aad-comp { margin-bottom: 14px; }
+.aad-wrap .aad-comp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+.aad-wrap .aad-comp-name { font-size: 0.875rem; font-weight: 600; color: #374151; }
+.aad-wrap .aad-comp-pct  { font-size: 1.1rem; font-weight: 700; color: #111827; }
+.aad-wrap .aad-prog-row  {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.aad-wrap .aad-track {
+  height: 10px;
+  background: #f3f4f6;
+  border-radius: 99px;
+  border: 1px solid #e5e7eb;
+  overflow: visible;
+  position: relative;
+}
+.aad-wrap .aad-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.aad-wrap .aad-fill-met    { background: #10b981; }
+.aad-wrap .aad-fill-notmet { background: #ef4444; }
+.aad-wrap .aad-target-line {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #f59e0b;
+  border-radius: 1px;
+}
+.aad-wrap .aad-target-line::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #b45309;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Badges ── */
+.aad-wrap .aad-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.aad-wrap .aad-badge-met    { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+.aad-wrap .aad-badge-notmet { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+.aad-wrap .aad-badge-warn   { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+
+/* ── Tabs ── */
+.aad-wrap .aad-tab-list {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0;
+}
+.aad-wrap .aad-tab-list::-webkit-scrollbar { display: none; }
+.aad-wrap .aad-tab-btn {
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.12s, border-color 0.12s;
+}
+.aad-wrap .aad-tab-btn:hover { color: #111827; }
+.aad-wrap .aad-tab-btn[aria-selected="true"] {
+  color: #1e40af;
+  border-bottom-color: #1e40af;
+}
+.aad-wrap .aad-tab-btn:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+.aad-wrap .aad-tab-panel { display: none; }
+.aad-wrap .aad-tab-panel.active { display: block; }
+
+/* ── Tables ── */
+.aad-wrap .aad-table-wrap,
+.aad-wrap .aad-detail-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.aad-wrap .aad-table,
+.aad-wrap .aad-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.aad-wrap .aad-table     { min-width: 480px; }
+.aad-wrap .aad-detail-table { min-width: 520px; }
+.aad-wrap .aad-table th,
+.aad-wrap .aad-detail-table th {
+  text-align: left;
+  padding: 7px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #d1d5db;
+  background: #f9fafb;
+  white-space: nowrap;
+}
+.aad-wrap .aad-detail-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.aad-wrap .aad-table td,
+.aad-wrap .aad-detail-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+.aad-wrap .aad-table tr:last-child td,
+.aad-wrap .aad-detail-table tr:last-child td { border-bottom: none; }
+.aad-wrap .aad-table tr:hover td,
+.aad-wrap .aad-detail-table tr:hover td { background: #f9fafb; }
+.aad-wrap .cell-met    { color: #065f46; font-weight: 600; }
+.aad-wrap .cell-notmet { color: #991b1b; font-weight: 600; }
+.aad-wrap .cell-na     { color: #9ca3af; }
+.aad-wrap .cell-tie    { color: #92400e; }
+
+/* ── ID pills ── */
+.aad-wrap .aad-pill-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.aad-wrap .aad-pill {
+  font-family: monospace;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+}
+
+/* ── Dashboard top row ── */
+.aad-wrap .aad-dash-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.aad-wrap .aad-dash-top h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0;
+}
+
+/* ── Visually hidden ── */
+.aad-wrap .sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Hidden states ── */
+.aad-wrap #aad-mapper-section,
+.aad-wrap #aad-dashboard-section { display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 560px) {
+  .aad-wrap { padding: 0 8px; }
+  .aad-wrap .aad-card { padding: 14px; }
+  .aad-wrap .aad-mapper-grid { grid-template-columns: 1fr 1fr; }
+  .aad-wrap .aad-metrics-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 360px) {
+  .aad-wrap .aad-mapper-grid { grid-template-columns: 1fr; }
+  .aad-wrap .aad-metrics-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  .aad-wrap .aad-btn-row { display: none; }
+}
+</style>
+</head>
+<body>
+ 
+<div class="aad-wrap" id="aad-root">
+ 
+  <a href="#aad-main" class="aad-skip">Skip to main content</a>
+ 
+  <div class="aad-header" role="banner">
+    <h1>Artifact Assessment Dashboard</h1>
+    <p>Upload a CSV export to analyze competency results across courses and scorers</p>
+  </div>
+ 
+  <main id="aad-main" tabindex="-1">
+ 
+    <!-- Step 1: Upload -->
+    <section id="aad-upload-section" aria-labelledby="aad-upload-heading">
+      <div class="aad-card">
+        <h2 id="aad-upload-heading" class="aad-card-title">Step 1 — Upload your scored data</h2>
+        <p class="aad-subtitle">Export your scoring spreadsheet as a CSV, then drop it here or click to browse.</p>
+ 
+        <div id="aad-error-msg" class="aad-alert aad-alert-error" role="alert" aria-live="assertive" tabindex="-1">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M8 4.5v4M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span id="aad-error-text"></span>
+        </div>
+ 
+        <div class="aad-upload-zone" id="aad-drop-zone">
+          <input type="file" id="file-input" accept=".csv,text/csv" aria-label="Choose a CSV file to upload">
+          <svg class="aad-upload-icon" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <rect x="4" y="4" width="36" height="36" rx="5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path d="M22 28V16M16 22l6-6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p><strong>Drop your CSV file here</strong></p>
+          <p>or click anywhere in this box to browse</p>
+          <p style="margin-top:6px;font-size:0.77rem;">Accepts .csv files exported from Excel or Google Sheets</p>
+        </div>
+ 
+        <div class="aad-hint" role="note">
+          <strong>What your CSV needs:</strong>
+          One row per scored artifact. Columns for: artifact ID, course name, each scorer's result for Comps 4, 5, and 6 (numbers like "3-met" or text like "Met/Not Met"), and the final agreed result. You'll match columns in Step 2 — no renaming required.
+        </div>
+      </div>
+ 
+      <div class="aad-card">
+        <h2 class="aad-card-title">Or start with a blank template</h2>
+        <p class="aad-subtitle">Download a pre-formatted CSV with all the right column names already in place.</p>
+        <button class="aad-btn aad-btn-secondary" onclick="aadDownloadTemplate()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download blank template
+        </button>
+      </div>
+    </section>
+ 
+    <!-- Step 2: Map columns -->
+    <section id="aad-mapper-section" aria-labelledby="aad-mapper-heading" tabindex="-1">
+      <div class="aad-card">
+        <h2 id="aad-mapper-heading" class="aad-card-title">Step 2 — Match your columns</h2>
+        <p class="aad-subtitle">Tell the dashboard which column in your file holds each piece of information. Columns have been auto-guessed — correct any that are wrong. Skip any that don't apply.</p>
+ 
+        <div id="aad-mapper-fields" class="aad-mapper-grid"></div>
+ 
+        <div class="aad-field" style="max-width:210px;margin-bottom:14px;">
+          <label for="aad-target-input">Target pass rate (%)</label>
+          <input type="number" id="aad-target-input" value="75" min="0" max="100" step="1" aria-describedby="aad-target-hint">
+          <span id="aad-target-hint" class="aad-field-hint">Minimum % Met your institution requires</span>
+        </div>
+ 
+        <div id="aad-preview-wrap" style="display:none;">
+          <div class="aad-alert aad-alert-info" role="status" aria-live="polite">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M8 7v4M8 5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span id="aad-preview-text"></span>
+          </div>
+        </div>
+ 
+        <div class="aad-btn-row">
+          <button class="aad-btn aad-btn-primary" onclick="aadRunAnalysis()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h12M2 4h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Generate dashboard
+          </button>
+          <button class="aad-btn aad-btn-secondary" onclick="aadResetAll()">Start over</button>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- Step 3: Dashboard -->
+    <section id="aad-dashboard-section" aria-labelledby="aad-dash-heading">
+ 
+      <div class="aad-dash-top">
+        <h2 id="aad-dash-heading">Results summary</h2>
+        <div class="aad-btn-row" style="margin:0;">
+          <button class="aad-btn aad-btn-secondary" onclick="aadDownloadReport()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Export CSV
+          </button>
+          <button class="aad-btn aad-btn-secondary" onclick="aadDownloadWordReport()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Export Word
+          </button>
+          <button class="aad-btn aad-btn-secondary" onclick="aadResetAll()">Upload new file</button>
+        </div>
+      </div>
+ 
+      <div class="aad-card" aria-labelledby="aad-overall-heading">
+        <h3 id="aad-overall-heading" class="aad-card-title">Overall — all courses combined</h3>
+        <div id="aad-overall-metrics" class="aad-metrics-grid"></div>
+        <div id="aad-overall-bars"></div>
+      </div>
+ 
+      <div class="aad-card" id="aad-course-card" style="display:none;" aria-labelledby="aad-course-heading">
+        <h3 id="aad-course-heading" class="aad-card-title">Results by course</h3>
+        <div class="aad-tab-list" role="tablist" id="aad-course-tabs" aria-label="Results by course"></div>
+        <div id="aad-course-panels"></div>
+      </div>
+ 
+      <div class="aad-card" id="aad-reliability-card" style="display:none;" aria-labelledby="aad-reliability-heading">
+        <h3 id="aad-reliability-heading" class="aad-card-title">Scorer agreement</h3>
+        <p class="aad-subtitle">How often did the two scorers agree on each competency? Low agreement may mean the rubric wording needs clarification.</p>
+        <div id="aad-reliability-content"></div>
+      </div>
+ 
+      <div class="aad-card" id="aad-flags-card" style="display:none;" aria-labelledby="aad-flags-heading">
+        <h3 id="aad-flags-heading" class="aad-card-title">Items to review</h3>
+        <div id="aad-flags-content"></div>
+      </div>
+ 
+      <div class="aad-card" aria-labelledby="aad-detail-heading">
+        <h3 id="aad-detail-heading" class="aad-card-title">Full detail — all artifacts</h3>
+        <div class="aad-detail-wrap" tabindex="0" role="region" aria-label="Detailed artifact scores, scrollable horizontally">
+          <table class="aad-detail-table" id="aad-detail-table">
+            <caption class="sr-only">Individual artifact scores for all competencies and scorers</caption>
+            <thead id="aad-detail-thead"></thead>
+            <tbody id="aad-detail-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+ 
+    </section>
+ 
+  </main>
+ 
+  <p style="text-align:center;font-size:0.72rem;color:#9ca3af;padding:16px 0;border-top:1px solid #f3f4f6;margin-top:4px;">
+    Your data stays in your browser and is never sent to any server.
+  </p>
+ 
+</div>
+<script>
+(function() {
+
+var aadRows = [], aadHdrs = [], aadMap = {}, aadTarget = 75;
+var aadEnrichedRows = [];
+
+var CN = {
+  c4: 'Ask for expert help (Comp 4)',
+  c5: 'Identify source characteristics (Comp 5)',
+  c6: 'Apply criteria for credible info (Comp 6)',
+  all: 'Met all competencies'
+};
+
+/* CSV */
+function parseCSV(text) {
+  var lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return null;
+  var h = parseCSVLine(lines[0]), rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    var vals = parseCSVLine(lines[i]);
+    if (vals.every(function(v){ return !v.trim(); })) continue;
+    var obj = {};
+    h.forEach(function(col, idx){ obj[col] = (vals[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  return { headers: h, rows: rows };
+}
+function parseCSVLine(line) {
+  var result = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+function norm(val) {
+  if (!val || val === '') return 'na';
+  var v = val.toString().toLowerCase().trim();
+  if (v === 'na' || v === 'n/a' || v === '-') return 'na';
+  if (v === 'met' || v === 'yes') return 'met';
+  if (v.indexOf('not met') > -1 || v.indexOf('notmet') > -1 || v === 'no') return 'notmet';
+  var m = v.match(/(\d)/);
+  if (m) { var n = parseInt(m[1]); if (n >= 3) return 'met'; if (n <= 2) return 'notmet'; }
+  if (v.indexOf('met') > -1) return 'met';
+  return 'na';
+}
+
+/* File */
+var fileInput = document.getElementById('file-input');
+var dropZone  = document.getElementById('aad-drop-zone');
+fileInput.addEventListener('change', function(e){ if (e.target.files[0]) handleFile(e.target.files[0]); });
+dropZone.addEventListener('dragover', function(e){ e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', function(e){
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function showErr(msg) {
+  var el = document.getElementById('aad-error-msg');
+  document.getElementById('aad-error-text').textContent = msg;
+  el.style.display = 'flex'; el.focus();
+}
+function clearErr() { document.getElementById('aad-error-msg').style.display = 'none'; }
+
+function handleFile(file) {
+  clearErr();
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showErr('Please upload a .csv file. In Excel: File → Save As → CSV.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var result = parseCSV(e.target.result);
+    if (!result || result.rows.length === 0) {
+      showErr('The file appears to be empty or could not be read. Please check and try again.');
+      return;
+    }
+    aadRows = result.rows; aadHdrs = result.headers;
+    buildMapper();
+  };
+  reader.onerror = function(){ showErr('Problem reading the file. Please try again.'); };
+  reader.readAsText(file);
+}
+
+/* Mapper */
+function buildMapper() {
+  document.getElementById('aad-upload-section').style.display = 'none';
+  var sec = document.getElementById('aad-mapper-section');
+  sec.style.display = 'block'; sec.focus();
+
+  var defs = [
+    {key:'id',       label:'Artifact ID column',      hint:'Unique ID for each artifact'},
+    {key:'course',   label:'Course name column',       hint:'e.g. CHEM& 142, CMST& 220'},
+    {key:'c4_s1',    label:'Comp 4 – Scorer 1',       hint:'Score or Met/Not Met'},
+    {key:'c4_s2',    label:'Comp 4 – Scorer 2',       hint:'Score or Met/Not Met'},
+    {key:'c5_s1',    label:'Comp 5 – Scorer 1',       hint:''},
+    {key:'c5_s2',    label:'Comp 5 – Scorer 2',       hint:''},
+    {key:'c6_s1',    label:'Comp 6 – Scorer 1',       hint:''},
+    {key:'c6_s2',    label:'Comp 6 – Scorer 2',       hint:''},
+    {key:'c4_final', label:'Final decision – Comp 4', hint:'Met / Not Met'},
+    {key:'c5_final', label:'Final decision – Comp 5', hint:'Met / Not Met'},
+    {key:'c6_final', label:'Final decision – Comp 6', hint:'Met / Not Met'},
+    {key:'tiebreak', label:'Tie-break needed',         hint:'Optional'},
+  ];
+
+  var wrap = document.getElementById('aad-mapper-fields');
+  wrap.innerHTML = '';
+  defs.forEach(function(fd) {
+    var guessed = guessCol(fd.key, aadHdrs);
+    var id = 'aad-map-' + fd.key, hid = id + '-hint';
+    var g = document.createElement('div');
+    g.className = 'aad-field';
+    g.innerHTML =
+      '<label for="' + id + '">' + fd.label + '</label>' +
+      '<select id="' + id + '" data-key="' + fd.key + '" aria-describedby="' + hid + '">' +
+        '<option value="">(not in my file)</option>' +
+        aadHdrs.map(function(h){ return '<option value="' + h + '"' + (h===guessed?' selected':'') + '>' + h + '</option>'; }).join('') +
+      '</select>' +
+      '<span id="' + hid + '" class="aad-field-hint">' + (fd.hint || fd.label) + '</span>';
+    wrap.appendChild(g);
+    g.querySelector('select').addEventListener('change', updatePreview);
+  });
+  updatePreview();
+}
+
+function guessCol(key, hdrs) {
+  var pats = {
+    id:       [/\bid\b/i,/artifact/i,/student/i,/number/i],
+    course:   [/course/i,/class/i,/section/i],
+    c4_s1:    [/comp.*4.*scor.*1/i,/4.*scorer.*1/i,/comp.*4.*result.*1/i],
+    c4_s2:    [/comp.*4.*scor.*2/i,/4.*scorer.*2/i,/comp.*4.*result.*2/i],
+    c5_s1:    [/comp.*5.*scor.*1/i,/5.*scorer.*1/i],
+    c5_s2:    [/comp.*5.*scor.*2/i,/5.*scorer.*2/i],
+    c6_s1:    [/comp.*6.*scor.*1/i,/6.*scorer.*1/i],
+    c6_s2:    [/comp.*6.*scor.*2/i,/6.*scorer.*2/i],
+    c4_final: [/comp.*4.*final/i,/final.*4/i,/comp.*4.*met/i,/#4.*met/i],
+    c5_final: [/comp.*5.*final/i,/final.*5/i,/comp.*5.*met/i,/#5.*met/i],
+    c6_final: [/comp.*6.*final/i,/final.*6/i,/comp.*6.*met/i,/#6.*met/i],
+    tiebreak: [/tie/i,/tiebreak/i,/needed/i],
+  };
+  var pp = pats[key] || [];
+  return hdrs.find(function(h){ return pp.some(function(p){ return p.test(h); }); }) || '';
+}
+
+function getVal(key) {
+  var el = document.getElementById('aad-map-' + key);
+  return el ? el.value : '';
+}
+
+function updatePreview() {
+  var hasId = !!getVal('id'), hasCourse = !!getVal('course');
+  var hasFinals = getVal('c4_final') || getVal('c5_final') || getVal('c6_final');
+  var hasScorer = getVal('c4_s1') || getVal('c5_s1') || getVal('c6_s1');
+  var wrap = document.getElementById('aad-preview-wrap'), msgs = [];
+  if (!hasId)     msgs.push('No ID column — artifacts will be numbered automatically.');
+  if (!hasCourse) msgs.push('No course column — all artifacts grouped as one.');
+  if (!hasFinals && !hasScorer) msgs.push('Select at least one scorer or final result column.');
+  if (!hasFinals && hasScorer)  msgs.push('No final decision columns — will calculate from scorers.');
+  if (msgs.length) {
+    wrap.style.display = 'block';
+    document.getElementById('aad-preview-text').textContent = msgs.join(' ');
+  } else { wrap.style.display = 'none'; }
+}
+
+/* Run */
+window.aadRunAnalysis = function() {
+  aadTarget = parseInt(document.getElementById('aad-target-input').value) || 75;
+  aadMap = {};
+  ['id','course','c4_s1','c4_s2','c5_s1','c5_s2','c6_s1','c6_s2','c4_final','c5_final','c6_final','tiebreak']
+    .forEach(function(k){ aadMap[k] = getVal(k); });
+  var hasAny = ['c4_final','c5_final','c6_final','c4_s1','c5_s1','c6_s1'].some(function(k){ return aadMap[k]; });
+  if (!hasAny) { showErr('Select at least one scorer or final-result column first.'); return; }
+
+  var enriched = aadRows.map(function(row, idx) {
+    var id     = aadMap.id     ? (row[aadMap.id]     || String(idx+1)) : String(idx+1);
+    var course = aadMap.course ? (row[aadMap.course] || 'All courses')     : 'All courses';
+    var tiebreak = aadMap.tiebreak ? (row[aadMap.tiebreak] || '') : '';
+    var scores = {};
+    ['c4','c5','c6','all'].forEach(function(c) {
+      var s1k=aadMap[c+'_s1'], s2k=aadMap[c+'_s2'], fk=aadMap[c+'_final'];
+      scores[c+'_s1'] = s1k ? norm(row[s1k]) : 'na';
+      scores[c+'_s2'] = s2k ? norm(row[s2k]) : 'na';
+      var fin = fk ? norm(row[fk]) : 'na';
+      if (fin === 'na') {
+        var s1=scores[c+'_s1'], s2=scores[c+'_s2'];
+        if      (s1!=='na' && s2!=='na') fin = (s1===s2) ? s1 : 'na';
+        else if (s1!=='na')              fin = s1;
+        else if (s2!=='na')              fin = s2;
+      }
+      scores[c+'_final'] = fin;
+    });
+    var out = {id:id, course:course, tiebreak:tiebreak};
+Object.keys(scores).forEach(function(k){ out[k]=scores[k]; });
+
+// NEW: overall competency result
+var finals = [scores.c4_final, scores.c5_final, scores.c6_final];
+
+if (finals.every(function(v){ return v === 'met'; })) {
+  out.all_met = 'met';
+} else if (finals.some(function(v){ return v === 'na'; })) {
+  out.all_met = 'na';
+} else {
+  out.all_met = 'notmet';
+}
+
+return out;
+  });
+
+  aadEnrichedRows = enriched;
+  renderDash(enriched);
+};
+
+/* Render */
+function renderDash(rows) {
+  document.getElementById('aad-mapper-section').style.display = 'none';
+  document.getElementById('aad-dashboard-section').style.display = 'block';
+  document.getElementById('aad-dash-heading').focus();
+
+  var courses = [];
+  rows.forEach(function(r){ if (courses.indexOf(r.course) < 0) courses.push(r.course); });
+  courses.sort();
+
+  function stats(sub, c) {
+    var finals = sub.map(function(r){
+  return c === 'all' ? r.all_met : r[c + '_final'];
+}).filter(function(v){ return v !== 'na'; });
+    var met = finals.filter(function(v){ return v==='met'; }).length;
+    return { met:met, total:finals.length, pct:finals.length ? Math.round(met/finals.length*100) : null };
+  }
+
+  /* Metrics */
+  var valid = rows.filter(function(r){ return ['c4','c5','c6'].some(function(c){ return r[c+'_final']!=='na'; }); });
+  document.getElementById('aad-overall-metrics').innerHTML =
+    '<div class="aad-metric"><p class="aad-metric-label">Artifacts scored</p><p class="aad-metric-value">'+rows.length+'</p><p class="aad-metric-sub">'+valid.length+' with valid results</p></div>' +
+    '<div class="aad-metric"><p class="aad-metric-label">Courses</p><p class="aad-metric-value">'+courses.length+'</p><p class="aad-metric-sub">'+courses.join(', ')+'</p></div>' +
+    '<div class="aad-metric"><p class="aad-metric-label">Target</p><p class="aad-metric-value">'+aadTarget+'%</p><p class="aad-metric-sub">minimum pass rate</p></div>';
+
+  var barsEl = document.getElementById('aad-overall-bars');
+  barsEl.innerHTML = '';
+  ['c4','c5','c6','all'].forEach(function(c){ barsEl.innerHTML += bar(CN[c], stats(rows,c), aadTarget); });
+
+  /* Course tabs */
+  if (courses.length > 1) {
+    document.getElementById('aad-course-card').style.display = 'block';
+    var tabList = document.getElementById('aad-course-tabs');
+    var panWrap = document.getElementById('aad-course-panels');
+    tabList.innerHTML = ''; panWrap.innerHTML = '';
+
+    courses.forEach(function(course, i) {
+      var tid='aad-tab-'+i, pid='aad-panel-'+i;
+      var btn = document.createElement('button');
+      btn.className = 'aad-tab-btn';
+      btn.id = tid;
+      btn.setAttribute('role','tab');
+      btn.setAttribute('aria-selected', i===0?'true':'false');
+      btn.setAttribute('aria-controls', pid);
+      btn.textContent = course;
+      btn.addEventListener('click', function(){ switchTab(i, courses.length); });
+      btn.addEventListener('keydown', function(e){
+        if (e.key==='ArrowRight'){ e.preventDefault(); var n=(i+1)%courses.length; switchTab(n,courses.length); document.getElementById('aad-tab-'+n).focus(); }
+        if (e.key==='ArrowLeft') { e.preventDefault(); var n=(i-1+courses.length)%courses.length; switchTab(n,courses.length); document.getElementById('aad-tab-'+n).focus(); }
+      });
+      tabList.appendChild(btn);
+
+      var sub = rows.filter(function(r){ return r.course===course; });
+      var panel = document.createElement('div');
+      panel.className = 'aad-tab-panel' + (i===0?' active':'');
+      panel.id = pid;
+      panel.setAttribute('role','tabpanel');
+      panel.setAttribute('aria-labelledby', tid);
+      panel.setAttribute('tabindex','0');
+      panel.innerHTML = '<p style="font-size:0.8rem;color:#6b7280;margin-bottom:12px;">'+sub.length+' artifacts</p>' +
+        ['c4','c5','c6','all'].map(function(c){ return bar(CN[c], stats(sub,c), aadTarget); }).join('');
+      panWrap.appendChild(panel);
+    });
+  }
+
+  function switchTab(idx, total) {
+    for (var j=0;j<total;j++) {
+      var b=document.getElementById('aad-tab-'+j), p=document.getElementById('aad-panel-'+j);
+      if(b) b.setAttribute('aria-selected', j===idx?'true':'false');
+      if(p) p.className='aad-tab-panel'+(j===idx?' active':'');
+    }
+  }
+
+  /* Reliability */
+  var disRows = rows.filter(function(r){
+    return ['c4','c5','c6'].some(function(c){ var s1=r[c+'_s1'],s2=r[c+'_s2']; return s1!=='na'&&s2!=='na'&&s1!==s2; });
+  });
+  var tieRows = rows.filter(function(r){ return r.tiebreak && r.tiebreak.toLowerCase()!=='no' && r.tiebreak.trim()!==''; });
+  if (disRows.length > 0 || tieRows.length > 0) {
+    document.getElementById('aad-reliability-card').style.display = 'block';
+    var rhtml = '<div class="aad-table-wrap" tabindex="0" role="region" aria-label="Scorer agreement table"><table class="aad-table"><thead><tr><th scope="col">Competency</th><th scope="col">Both scored</th><th scope="col">Agreed</th><th scope="col">Disagreed</th><th scope="col">Rate</th></tr></thead><tbody>';
+    ['c4','c5','c6'].forEach(function(c){
+      var both  = rows.filter(function(r){ return r[c+'_s1']!=='na'&&r[c+'_s2']!=='na'; });
+      var agree = both.filter(function(r){ return r[c+'_s1']===r[c+'_s2']; });
+      var dis   = both.length - agree.length;
+      var rate  = both.length ? Math.round(agree.length/both.length*100) : null;
+      var badge = rate===null ? '—' : rate>=80
+        ? '<span class="aad-badge aad-badge-met">'+rate+'%</span>'
+        : '<span class="aad-badge aad-badge-warn">'+rate+'%</span>';
+      rhtml += '<tr><td>'+CN[c]+'</td><td>'+both.length+'</td><td>'+agree.length+'</td><td>'+dis+'</td><td>'+badge+'</td></tr>';
+    });
+    rhtml += '</tbody></table></div>';
+    if (tieRows.length) {
+      rhtml += '<p style="font-size:0.8rem;color:#6b7280;margin-top:12px;">'+tieRows.length+' artifact(s) required a tie-break.</p>';
+      rhtml += '<div class="aad-pill-list">'+tieRows.map(function(r){ return '<span class="aad-pill">'+r.id+'</span>'; }).join('')+'</div>';
+    }
+    document.getElementById('aad-reliability-content').innerHTML = rhtml;
+  }
+
+  /* Flags */
+  var flags = [];
+  ['c4','c5','c6','all'].forEach(function(c){
+    var s = stats(rows, c);
+    if (s.pct!==null && s.pct<aadTarget)
+      flags.push({type:'error', msg:CN[c]+': overall pass rate '+s.pct+'% is below the '+aadTarget+'% target.'});
+    courses.forEach(function(course){
+      var sub = rows.filter(function(r){ return r.course===course; });
+      var cs = stats(sub, c);
+      if (cs.pct!==null && cs.pct<aadTarget)
+        flags.push({type:'warn', msg:course+' — '+CN[c]+': '+cs.pct+'% Met ('+cs.met+'/'+cs.total+'). Below target.'});
+    });
+  });
+  if (flags.length) {
+    document.getElementById('aad-flags-card').style.display = 'block';
+    document.getElementById('aad-flags-content').innerHTML = flags.map(function(f){
+      return '<div class="aad-alert aad-alert-'+f.type+'" style="margin-bottom:8px;">' +
+        '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2l6 12H2L8 2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6.5v3M8 11h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>' +
+        '<span>'+f.msg+'</span></div>';
+    }).join('');
+  }
+
+  /* Detail table */
+  var showS1  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s1']; });
+  var showS2  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s2']; });
+  var showTie = !!aadMap.tiebreak;
+  var th = '<tr><th scope="col">ID</th><th scope="col">All Met</th>';
+  if (courses.length>1) th += '<th scope="col">Course</th>';
+  if (showS1) th += '<th scope="col">C4 S1</th><th scope="col">C5 S1</th><th scope="col">C6 S1</th>';
+  if (showS2) th += '<th scope="col">C4 S2</th><th scope="col">C5 S2</th><th scope="col">C6 S2</th>';
+  th += '<th scope="col">C4 Final</th><th scope="col">C5 Final</th><th scope="col">C6 Final</th>';
+  if (showTie) th += '<th scope="col">Tie-break</th>';
+  th += '</tr>';
+  document.getElementById('aad-detail-thead').innerHTML = th;
+
+  function cv(v){ return v==='met'?'cell-met':v==='notmet'?'cell-notmet':'cell-na'; }
+  function ct(v){ return v==='met'?'Met':v==='notmet'?'Not met':'—'; }
+
+  document.getElementById('aad-detail-tbody').innerHTML = rows.map(function(r){
+    var td = '<td>'+r.id+'</td><td class="'+cv(r.all_met)+'">'+ct(r.all_met)+'</td>';
+    if (courses.length>1) td += '<td>'+r.course+'</td>';
+    if (showS1) td += '<td class="'+cv(r.c4_s1)+'">'+ct(r.c4_s1)+'</td><td class="'+cv(r.c5_s1)+'">'+ct(r.c5_s1)+'</td><td class="'+cv(r.c6_s1)+'">'+ct(r.c6_s1)+'</td>';
+    if (showS2) td += '<td class="'+cv(r.c4_s2)+'">'+ct(r.c4_s2)+'</td><td class="'+cv(r.c5_s2)+'">'+ct(r.c5_s2)+'</td><td class="'+cv(r.c6_s2)+'">'+ct(r.c6_s2)+'</td>';
+    td += '<td class="'+cv(r.c4_final)+'">'+ct(r.c4_final)+'</td><td class="'+cv(r.c5_final)+'">'+ct(r.c5_final)+'</td><td class="'+cv(r.c6_final)+'">'+ct(r.c6_final)+'</td>';
+    if (showTie) td += '<td class="'+(r.tiebreak?'cell-tie':'')+'" style="font-size:0.75rem;max-width:150px;word-break:break-word;">'+(r.tiebreak||'—')+'</td>';
+    return '<tr>'+td+'</tr>';
+  }).join('');
+}
+
+/* Bar */
+function bar(label, s, target) {
+  if (s.total===0) return '<div class="aad-comp"><div class="aad-comp-head"><span class="aad-comp-name">'+label+'</span><span class="aad-comp-pct">—</span></div><p style="font-size:0.8rem;color:#9ca3af;">No data.</p></div>';
+  var above = s.pct >= target;
+  var badge = above
+    ? '<span class="aad-badge aad-badge-met">Target met</span>'
+    : '<span class="aad-badge aad-badge-notmet">Below target</span>';
+  var aria = label+': '+s.pct+'% met, '+s.met+' of '+s.total+' artifacts. '+(above?'Target met.':'Below target.');
+  return '<div class="aad-comp">' +
+    '<div class="aad-comp-head"><span class="aad-comp-name">'+label+'</span><span class="aad-comp-pct">'+s.pct+'%</span></div>' +
+    '<div class="aad-prog-row"><span>'+s.met+' of '+s.total+' met</span><span>'+badge+'</span></div>' +
+    '<div class="aad-track" role="img" aria-label="'+aria+'">' +
+      '<div class="aad-fill '+(above?'aad-fill-met':'aad-fill-notmet')+'" style="width:'+s.pct+'%"></div>' +
+      '<div class="aad-target-line" style="left:'+Math.min(target,100)+'%" aria-hidden="true" data-label="'+target+'%"></div>' +
+    '</div></div>';
+}
+
+/* Downloads */
+window.aadDownloadTemplate = function() {
+  var h = ['ID','Course','Comp 4 result - Scorer 1','Comp 5 result - Scorer 1','Comp 6 result - Scorer 1','Comp 4 result - Scorer 2','Comp 5 result - Scorer 2','Comp 6 result - Scorer 2','Tie break needed','Comp 4 Met/Not Met','Comp 5 Met/Not Met','Comp 6 Met/Not Met'];
+  var ex = ['001','CHEM& 142','3-met','6-met','3-met','3-met','5-not met','2-not met','Yes - #6','Met','Met','Met'];
+  var blank = h.map(function(){ return ''; });
+  var csv = [h,ex,blank,blank,blank,blank].map(function(r){ return r.map(function(v){ return '"'+v+'"'; }).join(','); }).join('\n');
+  dlCSV(csv, 'assessment-template.csv');
+};
+
+window.aadDownloadReport = function() {
+  if (!aadEnrichedRows.length) return;
+  
+  var courses = [];
+  aadEnrichedRows.forEach(function(r){ if (courses.indexOf(r.course) < 0) courses.push(r.course); });
+  courses.sort();
+
+  function stats(sub, c) {
+    var finals = sub.map(function(r){
+  return c === 'all' ? r.all_met : r[c + '_final'];
+}).filter(function(v){ return v !== 'na'; });
+    var met = finals.filter(function(v){ return v==='met'; }).length;
+    return { met:met, total:finals.length, pct:finals.length ? Math.round(met/finals.length*100) : null };
+  }
+
+  var safe = function(v){ return v===null ? 'N/A' : v + '%'; };
+  var lines = [];
+  
+  lines.push('"ARTIFACT ASSESSMENT ANALYSIS REPORT"');
+  lines.push('"Generated: ' + new Date().toLocaleDateString() + '"');
+  lines.push('');
+  
+  lines.push('"METHODOLOGY"');
+  lines.push('"This dashboard analyzes student artifact assessment data across three competencies:"');
+  lines.push('"- Competency 4: Ask for expert help when needed"');
+  lines.push('"- Competency 5: Identify characteristics that make a source both credible and appropriate"');
+  lines.push('"- Competency 6: Apply relevant criteria for determining credible and appropriate information"');
+  lines.push('');
+  lines.push('"Data Processing:"');
+  lines.push('"1. Scoring Normalization: Numeric scores (1-2 = Not Met; 3-8 = Met) and text values (Met/Not Met) are standardized"');
+  lines.push('"2. Final Decisions: When not provided, calculated from scorer agreement (if both scored and agreed)"');
+  lines.push('"3. Pass Rate Calculation: (Number Met / Total Scored) × 100, rounded to nearest whole percent"');
+  lines.push('"4. Comparison to Target: Your institution target is ' + aadTarget + '% - results below this are flagged"');
+  lines.push('');
+  
+  lines.push('"OVERALL SUMMARY"');
+  lines.push('"Target Pass Rate","' + aadTarget + '%"');
+  lines.push('"Total Artifacts","' + aadEnrichedRows.length + '"');
+  lines.push('"Courses","' + courses.join('; ') + '"');
+  lines.push('');
+  lines.push('"Competency","Met","Total Scored","Pass Rate","Status"');
+  ['c4','c5','c6','all'].forEach(function(c){
+    var s = stats(aadEnrichedRows, c);
+    var status = s.pct === null ? 'No data' : s.pct >= aadTarget ? 'Target Met' : 'Below Target';
+    lines.push(['"'+CN[c]+'"', s.met, s.total, '"'+safe(s.pct)+'"', '"'+status+'"'].join(','));
+  });
+  lines.push('');
+  
+  if (courses.length > 1) {
+    lines.push('"RESULTS BY COURSE"');
+    lines.push('"Course","Competency","Met","Total Scored","Pass Rate","Status"');
+    courses.forEach(function(course){
+      var sub = aadEnrichedRows.filter(function(r){ return r.course === course; });
+      ['c4','c5','c6','all'].forEach(function(c){
+        var s = stats(sub, c);
+        var status = s.pct === null ? 'No data' : s.pct >= aadTarget ? 'Target Met' : 'Below Target';
+        lines.push(['"'+course+'"','"'+CN[c]+'"', s.met, s.total, '"'+safe(s.pct)+'"', '"'+status+'"'].join(','));
+      });
+    });
+    lines.push('');
+  }
+  
+  var hasBoth = ['c4','c5','c6'].some(function(c){
+    return aadEnrichedRows.some(function(r){ return r[c+'_s1']!=='na' && r[c+'_s2']!=='na'; });
+  });
+  if (hasBoth) {
+    lines.push('"SCORER AGREEMENT ANALYSIS"');
+    lines.push('"Agreement rates of 80% or higher indicate strong inter-rater reliability"');
+    lines.push('"Competency","Both Scored","Agreed","Disagreed","Agreement Rate"');
+    ['c4','c5','c6','all'].forEach(function(c){
+      var both  = aadEnrichedRows.filter(function(r){ return r[c+'_s1']!=='na' && r[c+'_s2']!=='na'; });
+      var agree = both.filter(function(r){ return r[c+'_s1'] === r[c+'_s2']; });
+      var dis   = both.length - agree.length;
+      var rate  = both.length ? Math.round(agree.length / both.length * 100) + '%' : 'N/A';
+      lines.push(['"'+CN[c]+'"', both.length, agree.length, dis, '"'+rate+'"'].join(','));
+    });
+    lines.push('');
+  }
+  
+  lines.push('"INDIVIDUAL ARTIFACT DETAILS"');
+  var showS1  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s1']; });
+  var showS2  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s2']; });
+  var showTie = !!aadMap.tiebreak;
+  var hdrs = ['"ID"', '"Course"'];
+  if (showS1) hdrs = hdrs.concat(['"Comp 4 Scorer 1"','"Comp 5 Scorer 1"','"Comp 6 Scorer 1"']);
+  if (showS2) hdrs = hdrs.concat(['"Comp 4 Scorer 2"','"Comp 5 Scorer 2"','"Comp 6 Scorer 2"']);
+  hdrs = hdrs.concat(['"Comp 4 Final"','"Comp 5 Final"','"Comp 6 Final"']);
+  if (showTie) hdrs.push('"Tie-break"');
+  lines.push(hdrs.join(','));
+  
+  aadEnrichedRows.forEach(function(r){
+    var fmt = function(v){ return v==='met'?'Met':v==='notmet'?'Not Met':'N/A'; };
+    var row = ['"'+r.id+'"', '"'+r.course+'"'];
+    if (showS1) row = row.concat(['"'+fmt(r.c4_s1)+'"','"'+fmt(r.c5_s1)+'"','"'+fmt(r.c6_s1)+'"']);
+    if (showS2) row = row.concat(['"'+fmt(r.c4_s2)+'"','"'+fmt(r.c5_s2)+'"','"'+fmt(r.c6_s2)+'"']);
+    row = row.concat(['"'+fmt(r.c4_final)+'"','"'+fmt(r.c5_final)+'"','"'+fmt(r.c6_final)+'"']);
+    if (showTie) row.push('"'+(r.tiebreak||'')+'"');
+    lines.push(row.join(','));
+  });
+  
+  dlCSV(lines.join('\n'), 'assessment-report.csv');
+};
+
+window.aadDownloadWordReport = function() {
+  if (!aadEnrichedRows.length) {
+    alert('Please run the analysis first before exporting.');
+    return;
+  }
+
+  var courses = [];
+  aadEnrichedRows.forEach(function(r){ if (courses.indexOf(r.course) < 0) courses.push(r.course); });
+  courses.sort();
+
+  function stats(sub, c) {
+    var finals = sub.map(function(r){
+  return c === 'all' ? r.all_met : r[c + '_final'];
+}).filter(function(v){ return v !== 'na'; });
+    var met = finals.filter(function(v){ return v==='met'; }).length;
+    return { met:met, total:finals.length, pct:finals.length ? Math.round(met/finals.length*100) : null };
+  }
+
+  function safe(v){ return v===null ? '—' : v + '%'; }
+  function statusStr(s){ return s.pct === null ? 'No data' : s.pct >= aadTarget ? '✓ Target Met' : '✗ Below Target'; }
+
+  var overallRows = ['c4','c5','c6','all'].map(function(c){
+    var s = stats(aadEnrichedRows, c);
+    var color = s.pct === null ? '' : s.pct >= aadTarget ? 'color:#065f46;' : 'color:#991b1b;';
+    return '<tr><td>'+CN[c]+'</td><td style="text-align:center;">'+s.met+'</td><td style="text-align:center;">'+s.total+'</td>' +
+           '<td style="text-align:center;font-weight:700;'+color+'">'+safe(s.pct)+'</td>' +
+           '<td style="'+color+'font-weight:600;">'+statusStr(s)+'</td></tr>';
+  }).join('');
+
+  var courseSection = courses.map(function(course){
+    var sub = aadEnrichedRows.filter(function(r){ return r.course === course; });
+    var courseRows = ['c4','c5','c6','all'].map(function(c){
+      var s = stats(sub, c);
+      var color = s.pct === null ? '' : s.pct >= aadTarget ? 'color:#065f46;' : 'color:#991b1b;';
+      return '<tr><td>'+CN[c]+'</td><td style="text-align:center;">'+s.met+'</td><td style="text-align:center;">'+s.total+'</td>' +
+             '<td style="text-align:center;font-weight:700;'+color+'">'+safe(s.pct)+'</td>' +
+             '<td style="'+color+'font-weight:600;">'+statusStr(s)+'</td></tr>';
+    }).join('');
+    return '<h3>'+course+' ('+sub.length+' artifacts)</h3>' +
+      '<table><thead><tr><th>Competency</th><th>Met</th><th>Total</th><th>Pass Rate</th><th>Status</th></tr></thead><tbody>'+courseRows+'</tbody></table>';
+  }).join('');
+
+  var agreementSection = '';
+  var hasBothScorers = ['c4','c5','c6'].some(function(c){
+    return aadEnrichedRows.some(function(r){ return r[c+'_s1']!=='na' && r[c+'_s2']!=='na'; });
+  });
+  if (hasBothScorers) {
+    var agreementRows = ['c4','c5','c6','all'].map(function(c){
+      var both  = aadEnrichedRows.filter(function(r){ return r[c+'_s1']!=='na' && r[c+'_s2']!=='na'; });
+      var agree = both.filter(function(r){ return r[c+'_s1'] === r[c+'_s2']; });
+      var dis   = both.length - agree.length;
+      var rate  = both.length ? Math.round(agree.length / both.length * 100) : null;
+      var color = rate === null ? '' : rate >= 80 ? 'color:#065f46;' : 'color:#92400e;';
+      return '<tr><td>'+CN[c]+'</td><td style="text-align:center;">'+both.length+'</td>' +
+             '<td style="text-align:center;">'+agree.length+'</td><td style="text-align:center;">'+dis+'</td>' +
+             '<td style="text-align:center;font-weight:700;'+color+'">'+(rate===null?'—':rate+'%')+'</td></tr>';
+    }).join('');
+    agreementSection = '<h2>Scorer Agreement</h2>' +
+      '<p>Agreement rates show how often the two scorers gave the same result. Rates of 80% or higher indicate strong inter-rater reliability.</p>' +
+      '<table><thead><tr><th>Competency</th><th>Both Scored</th><th>Agreed</th><th>Disagreed</th><th>Agreement Rate</th></tr></thead><tbody>'+agreementRows+'</tbody></table>';
+
+    var tieRows = aadEnrichedRows.filter(function(r){ return r.tiebreak && r.tiebreak.toLowerCase()!=='no' && r.tiebreak.trim()!==''; });
+    if (tieRows.length) {
+      agreementSection += '<p><strong>'+tieRows.length+' artifact(s) required a tie-break:</strong> '+tieRows.map(function(r){ return r.id; }).join(', ')+'</p>';
+    }
+  }
+
+  var flags = [];
+  ['c4','c5','c6','all'].forEach(function(c){
+    var s = stats(aadEnrichedRows, c);
+    if (s.pct!==null && s.pct<aadTarget)
+      flags.push(CN[c]+': overall pass rate '+s.pct+'% is below the '+aadTarget+'% target.');
+    courses.forEach(function(course){
+      var sub = aadEnrichedRows.filter(function(r){ return r.course===course; });
+      var cs = stats(sub, c);
+      if (cs.pct!==null && cs.pct<aadTarget)
+        flags.push(course+' — '+CN[c]+': '+cs.pct+'% Met ('+cs.met+'/'+cs.total+'). Below target.');
+    });
+  });
+  var flagsHTML = flags.length
+    ? flags.map(function(f){ return '<li style="color:#991b1b;">'+f+'</li>'; }).join('')
+    : '<li style="color:#065f46;">No issues detected — all competencies met the target pass rate.</li>';
+
+  var showS1  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s1']; });
+  var showS2  = ['c4','c5','c6'].some(function(c){ return aadMap[c+'_s2']; });
+  var showTie = !!aadMap.tiebreak;
+  var detailHead = '<tr><th>ID</th><th>Course</th>';
+  if (showS1) detailHead += '<th>C4 S1</th><th>C5 S1</th><th>C6 S1</th>';
+  if (showS2) detailHead += '<th>C4 S2</th><th>C5 S2</th><th>C6 S2</th>';
+  detailHead += '<th>C4 Final</th><th>C5 Final</th><th>C6 Final</th>';
+  if (showTie) detailHead += '<th>Tie-break</th>';
+  detailHead += '</tr>';
+
+  function cellStyle(v){ return v==='met'?'color:#065f46;font-weight:600;':v==='notmet'?'color:#991b1b;font-weight:600;':'color:#9ca3af;'; }
+  function cellText(v){ return v==='met'?'Met':v==='notmet'?'Not Met':'—'; }
+  
+  var detailBody = aadEnrichedRows.map(function(r){
+    var td = '<td>'+r.id+'</td><td>'+r.course+'</td>';
+    if (showS1) td += '<td style="'+cellStyle(r.c4_s1)+'">'+cellText(r.c4_s1)+'</td><td style="'+cellStyle(r.c5_s1)+'">'+cellText(r.c5_s1)+'</td><td style="'+cellStyle(r.c6_s1)+'">'+cellText(r.c6_s1)+'</td>';
+    if (showS2) td += '<td style="'+cellStyle(r.c4_s2)+'">'+cellText(r.c4_s2)+'</td><td style="'+cellStyle(r.c5_s2)+'">'+cellText(r.c5_s2)+'</td><td style="'+cellStyle(r.c6_s2)+'">'+cellText(r.c6_s2)+'</td>';
+    td += '<td style="'+cellStyle(r.c4_final)+'">'+cellText(r.c4_final)+'</td><td style="'+cellStyle(r.c5_final)+'">'+cellText(r.c5_final)+'</td><td style="'+cellStyle(r.c6_final)+'">'+cellText(r.c6_final)+'</td>';
+    if (showTie) td += '<td>'+(r.tiebreak||'—')+'</td>';
+    return '<tr>'+td+'</tr>';
+  }).join('');
+
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+'<head><meta charset="utf-8"><title>Artifact Assessment Report</title>' +
+'<style>' +
+'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#111827;margin:1in;}' +
+'h1{color:#1e40af;font-size:20pt;margin:0 0 6pt;}' +
+'h2{color:#1e40af;font-size:14pt;margin:20pt 0 8pt;border-bottom:1.5pt solid #1e40af;padding-bottom:4pt;}' +
+'h3{color:#374151;font-size:12pt;margin:14pt 0 6pt;}' +
+'table{border-collapse:collapse;width:100%;margin-bottom:14pt;font-size:10pt;}' +
+'th{background:#1e40af;color:#fff;padding:6pt 8pt;text-align:left;font-weight:700;}' +
+'td{padding:5pt 8pt;border-bottom:1pt solid #e5e7eb;vertical-align:top;}' +
+'tr:nth-child(even) td{background:#f9fafb;}' +
+'.meta{background:#f3f4f6;border:1pt solid #d1d5db;border-radius:4pt;padding:10pt 14pt;margin-bottom:16pt;}' +
+'.meta p{margin:3pt 0;font-size:10.5pt;}' +
+'.methodology{background:#fffbeb;border:1pt solid #fcd34d;border-radius:4pt;padding:12pt 14pt;margin-bottom:16pt;}' +
+'.methodology h2{color:#92400e;font-size:13pt;margin:0 0 8pt;border:none;padding:0;}' +
+'.methodology ul{margin:6pt 0 0 20pt;padding:0;}' +
+'.methodology li{margin-bottom:6pt;color:#374151;}' +
+'ul{margin:6pt 0 12pt 16pt;}' +
+'li{margin-bottom:4pt;}' +
+'</style><\/head>' +
+'<body>' +
+'<h1>Artifact Assessment Report</h1>' +
+'<div class="meta">' +
+'<p><strong>Generated:</strong> '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'</p>' +
+'<p><strong>Target Pass Rate:</strong> '+aadTarget+'%</p>' +
+'<p><strong>Total Artifacts:</strong> '+aadEnrichedRows.length+'</p>' +
+'<p><strong>Courses:</strong> '+courses.join(', ')+'</p>' +
+'</div>' +
+'<div class="methodology">' +
+'<h2>How This Data Was Analyzed</h2>' +
+'<p><strong>Competencies Assessed:</strong></p>' +
+'<ul>' +
+'<li><strong>Competency 4:</strong> Ask for expert help when needed</li>' +
+'<li><strong>Competency 5:</strong> Identify characteristics that make a source both credible and appropriate for a specific purpose</li>' +
+'<li><strong>Competency 6:</strong> Apply relevant criteria for determining credible and appropriate information for different needs</li>' +
+'</ul>' +
+'<p><strong>Data Processing Steps:</strong></p>' +
+'<ul>' +
+'<li><strong>Score Normalization:</strong> Numeric scores were standardized (scores 1-2 = Not Met; scores 3-8 = Met). Text entries like "Met" or "Not Met" were preserved.</li>' +
+'<li><strong>Final Decisions:</strong> When final decisions were not provided in your data, they were calculated automatically when both scorers agreed on the same result.</li>' +
+'<li><strong>Pass Rate Calculation:</strong> For each competency, the pass rate = (Number of artifacts that Met the standard ÷ Total number of artifacts scored) × 100, rounded to the nearest whole percentage.</li>' +
+'<li><strong>Target Comparison:</strong> Your institution\'s target pass rate is '+aadTarget+'%. Any competency or course falling below this threshold is flagged for review.</li>' +
+'<li><strong>Scorer Agreement:</strong> Calculated as the percentage of artifacts where both scorers gave identical results. Agreement rates of 80% or higher indicate strong inter-rater reliability.</li>' +
+'</ul>' +
+'</div>' +
+'<h2>Overall Results — All Courses Combined</h2>' +
+'<table><thead><tr><th>Competency</th><th>Met</th><th>Total</th><th>Pass Rate</th><th>Status</th></tr></thead><tbody>'+overallRows+'</tbody></table>' +
+(courses.length > 1 ? '<h2>Results by Course</h2>'+courseSection : '') +
+agreementSection +
+'<h2>Issues Requiring Attention</h2><ul>'+flagsHTML+'</ul>' +
+'<h2>Full Artifact Detail</h2>' +
+'<table><thead>'+detailHead+'</thead><tbody>'+detailBody+'</tbody></table>' +
+'<\/body><\/html>';
+
+  var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'artifact-assessment-report.doc';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 1000);
+};
+
+function dlCSV(content, filename) {
+  var blob = new Blob([content], {type:'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+/* Reset */
+window.aadResetAll = function() {
+  aadRows=[]; aadHdrs=[]; aadMap={}; aadEnrichedRows=[];
+  document.getElementById('aad-upload-section').style.display = 'block';
+  document.getElementById('aad-mapper-section').style.display = 'none';
+  document.getElementById('aad-dashboard-section').style.display = 'none';
+  document.getElementById('aad-course-card').style.display = 'none';
+  document.getElementById('aad-reliability-card').style.display = 'none';
+  document.getElementById('aad-flags-card').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  clearErr();
+  document.getElementById('aad-upload-section').querySelector('h2').focus();
+};
+
+})();
+</script>
+</body>
+
+</html>
